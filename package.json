@@ -2,14 +2,6 @@
   "name": "nested-object-diff",
   "version": "1.0.0",
   "description": "A lightweight javascript diff library for comparing two javascript object nested with supporting matching by value of the object's choosen key name in array.",
-  "keywords": [
-    "nested",
-    "deep",
-    "object",
-    "array",
-    "json",
-    "diff"
-  ],
   "main": "index.js",
   "files": [
     "dist",
@@ -21,7 +13,19 @@
     "test": "mocha test/**/*.js",
     "test:coverage": "nyc --reporter=lcov --reporter=text-lcov npm test"
   },
-  "author": "Eray Köse",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eraykose/nested-object-diff.git"
+  },
+  "author": "Eray Köse <eraykose@gmail.com>",
+  "keywords": [
+    "nested",
+    "deep",
+    "object",
+    "array",
+    "json",
+    "diff"
+  ],
   "license": "MIT",
   "devDependencies": {
     "@babel/cli": "^7.6.0",
@@ -40,5 +44,9 @@
     "eslint-plugin-standard": "^4.0.1",
     "mocha": "^6.2.0",
     "nyc": "^14.1.1"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/eraykose/nested-object-diff/issues"
+  },
+  "homepage": "https://github.com/eraykose/nested-object-diff/#readme"
 }
