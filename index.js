@@ -33,14 +33,14 @@ class DiffNew extends Diff {
 const getPath = (currentPath, key) =>
   currentPath ? `${currentPath}.${key}` : key;
 
-export default (lhs, rhs, props = {}) => {
+export const diff  = (lhs, rhs, props = {}) => {
   const diffData = [];
-  const mathKey = props.mathKey;
-
-  const nestedDiffMatch = (lhData, rhData, currentPath, mathKey) => {
+  const matchKey = props.matchKey;
+  
+  const nestedDiffMatch = (lhData, rhData, currentPath, matchKey) => {
     lhData.forEach(lhItem => {
       const rhFoundItemIndex = rhData.findIndex(
-        rhItem => rhItem[mathKey] === lhItem[mathKey]
+        rhItem => rhItem[matchKey] === lhItem[matchKey]
       );
 
       if (rhFoundItemIndex > -1) {
@@ -56,7 +56,7 @@ export default (lhs, rhs, props = {}) => {
 
     rhData.forEach((rhItem, key) => {
       const lhFoundItemIndex = lhData.findIndex(
-        lhItem => rhItem[mathKey] === lhItem[mathKey]
+        lhItem => rhItem[matchKey] === lhItem[matchKey]
       );
 
       if (lhFoundItemIndex === -1) {
@@ -89,7 +89,7 @@ export default (lhs, rhs, props = {}) => {
         }
       });
     } else if (typeOfLhData === '[object Array]') {
-      if (!mathKey) {
+      if (!matchKey) {
         let lhDataLength = lhData.length - 1;
         let rhDataLength = rhData.length - 1;
 
@@ -117,7 +117,7 @@ export default (lhs, rhs, props = {}) => {
           );
         }
       } else {
-        nestedDiffMatch(lhData, rhData, currentPath, mathKey);
+        nestedDiffMatch(lhData, rhData, currentPath, matchKey);
       }
     } else if (lhData !== rhData) {
       diffData.push(new DiffEdit(currentPath, lhData, rhData));
