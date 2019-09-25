@@ -1,7 +1,7 @@
 class Diff {
   constructor(type, path) {
     this.type = type;
-    this.path = path;
+    this.path = path ? path.toString() : '';
   }
 }
 
@@ -11,6 +11,16 @@ class DiffEdit extends Diff {
 
     this.lhs = lhs;
     this.rhs = rhs;
+  }
+}
+
+class DiffMoved extends Diff {
+  constructor(path, item, lhsIndex, rhsIndex) {
+    super('M', path);
+
+    this.item = item;
+    this.lhsIndex = lhsIndex;
+    this.rhsIndex = rhsIndex;
   }
 }
 
@@ -33,23 +43,30 @@ class DiffNew extends Diff {
 const getPath = (currentPath, key) =>
   currentPath ? `${currentPath}.${key}` : key;
 
-export const diff  = (lhs, rhs, props = {}) => {
+export const diff = (lhs, rhs, options = {}) => {
   const diffData = [];
-  const matchKey = props.matchKey;
-  
+  const matchKey = options.matchKey;
+  const types = options.types || ['E', 'A', 'D', 'M'];
+
   const nestedDiffMatch = (lhData, rhData, currentPath, matchKey) => {
-    lhData.forEach(lhItem => {
+    lhData.forEach((lhItem, lhItemIndex) => {
       const rhFoundItemIndex = rhData.findIndex(
         rhItem => rhItem[matchKey] === lhItem[matchKey]
       );
 
       if (rhFoundItemIndex > -1) {
+        if (types.indexOf('M') > -1 && lhItemIndex !== rhFoundItemIndex) {
+          diffData.push(
+            new DiffMoved(currentPath, lhItem, lhItemIndex, rhFoundItemIndex)
+          );
+        }
+
         nestedDiff(
           lhItem,
           rhData[rhFoundItemIndex],
           getPath(currentPath, rhFoundItemIndex)
         );
-      } else {
+      } else if (types.indexOf('D') > -1) {
         diffData.push(new DiffDel(currentPath, lhItem));
       }
     });
@@ -59,7 +76,7 @@ export const diff  = (lhs, rhs, props = {}) => {
         lhItem => rhItem[matchKey] === lhItem[matchKey]
       );
 
-      if (lhFoundItemIndex === -1) {
+      if (types.indexOf('A') > -1 && lhFoundItemIndex === -1) {
         diffData.push(new DiffNew(getPath(currentPath, key), rhItem));
       }
     });
@@ -69,7 +86,7 @@ export const diff  = (lhs, rhs, props = {}) => {
     const typeOfLhData = Object.prototype.toString.call(lhData);
     const typeOfRhData = Object.prototype.toString.call(rhData);
 
-    if (typeOfLhData !== typeOfRhData) {
+    if (types.indexOf('E') > -1 && typeOfLhData !== typeOfRhData) {
       diffData.push(new DiffEdit(currentPath, lhData, rhData));
       return false;
     }
@@ -78,13 +95,16 @@ export const diff  = (lhs, rhs, props = {}) => {
       Object.getOwnPropertyNames(lhData).forEach(key => {
         if (Object.prototype.hasOwnProperty.call(rhData, key)) {
           nestedDiff(lhData[key], rhData[key], getPath(currentPath, key));
-        } else {
+        } else if (types.indexOf('D') > -1) {
           diffData.push(new DiffDel(getPath(currentPath, key), lhData[key]));
         }
       });
 
       Object.getOwnPropertyNames(rhData).forEach(key => {
-        if (!Object.prototype.hasOwnProperty.call(lhData, key)) {
+        if (
+          types.indexOf('A') > -1 &&
+          !Object.prototype.hasOwnProperty.call(lhData, key)
+        ) {
           diffData.push(new DiffNew(getPath(currentPath, key), rhData[key]));
         }
       });
@@ -93,22 +113,28 @@ export const diff  = (lhs, rhs, props = {}) => {
         let lhDataLength = lhData.length - 1;
         let rhDataLength = rhData.length - 1;
 
-        while (lhDataLength > rhDataLength) {
-          diffData.push(
-            new DiffDel(
-              getPath(currentPath, lhDataLength),
-              lhData[lhDataLength--]
-            )
-          );
+        if (types.indexOf('D') > -1) {
+          while (lhDataLength > rhDataLength) {
+            diffData.push(
+              new DiffDel(
+                getPath(currentPath, lhDataLength),
+                lhData[lhDataLength--]
+              )
+            );
+          }
         }
-        while (rhDataLength > lhDataLength) {
-          diffData.push(
-            new DiffNew(
-              getPath(currentPath, rhDataLength),
-              rhData[rhDataLength--]
-            )
-          );
+
+        if (types.indexOf('A') > -1) {
+          while (rhDataLength > lhDataLength) {
+            diffData.push(
+              new DiffNew(
+                getPath(currentPath, rhDataLength),
+                rhData[rhDataLength--]
+              )
+            );
+          }
         }
+
         for (; lhDataLength >= 0; --lhDataLength) {
           nestedDiff(
             lhData[lhDataLength],
@@ -119,7 +145,7 @@ export const diff  = (lhs, rhs, props = {}) => {
       } else {
         nestedDiffMatch(lhData, rhData, currentPath, matchKey);
       }
-    } else if (lhData !== rhData) {
+    } else if (types.indexOf('E') > -1 && lhData !== rhData) {
       diffData.push(new DiffEdit(currentPath, lhData, rhData));
     }
   };
