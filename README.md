@@ -9,7 +9,7 @@ A lightweight javascript diff library for comparing two javascript object nested
 
 ## Installation
 
-```js
+```sh
 npm i --save nested-object-diff
 ```
 
